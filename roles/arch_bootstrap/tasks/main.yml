@@ -1,0 +1,9 @@
+- name: Update pacman master package lists and upgrade outdated packages if any.
+  pacman:
+    update_cache: yes
+    upgrade: yes
+
+- name: Install docker and docker-compose
+  pacman:
+    name: ['docker', 'docker-compose']
+

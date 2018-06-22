@@ -4,7 +4,7 @@
 #
 
 FROM alpine:latest
-ENV  APP_VER=0.8.11
+ENV  APP_VER=0.8.12
 RUN  apk update --quiet && apk add build-base
 
 RUN  wget https://github.com/z3APA3A/3proxy/archive/${APP_VER}.tar.gz &&\

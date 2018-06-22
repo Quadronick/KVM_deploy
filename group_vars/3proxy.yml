@@ -2,8 +2,8 @@
 # 3proxy variables
 #
 
-ns_server_1: x.x.x.x
-ns_server_2: x.x.x.x
+ns_server_1: 77.88.8.8
+ns_server_2: 77.88.8.1
 
-username: username
-userpass: plainpassword
+username: "username"
+userpass: "plainpassword"
