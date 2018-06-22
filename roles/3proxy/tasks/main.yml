@@ -5,7 +5,7 @@
     /opt/3proxy
 
 - name: Copy 3proxy config
-  copy: src="3proxy.cfg" dest="/opt/3proxy"
+  template: src="3proxy.cfg.j2" dest="/opt/3proxy/3proxy.cfg"
 
 - name: Copy Dockerfile
   copy: src="Dockerfile" dest="/root/3proxy-role"

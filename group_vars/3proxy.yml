@@ -1,0 +1,9 @@
+#
+# 3proxy variables
+#
+
+ns_server_1: x.x.x.x
+ns_server_2: x.x.x.x
+
+username: username
+userpass: plainpassword
