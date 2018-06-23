@@ -7,3 +7,9 @@
   pacman:
     name: ['docker', 'docker-compose']
 
+- name: Enable docker service
+  service:
+    name: docker
+    enabled: yes
+    state: started
+
