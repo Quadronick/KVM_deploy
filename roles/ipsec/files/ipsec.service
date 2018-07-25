@@ -1,20 +1,20 @@
 [Unit]
-Description=docker-compose 3proxy service
+Description=docker-compose ipsec service
 After=docker.service network-online.target
 Requires=docker.service network-online.target
 
 [Service]
-WorkingDirectory=/root/3proxy-role/
+WorkingDirectory=/root/ipsec-role/
 Type=oneshot
 RemainAfterExit=yes
 
-ExecStartPre=-/usr/bin/docker rm -fv 3proxy
+ExecStartPre=-/usr/bin/docker rm -fv ipsec
 ExecStartPre=-/usr/bin/docker-compose pull --quiet --parallel
 ExecStart=-/usr/bin/docker-compose up -d 
 
 ExecStop=-/usr/bin/docker-compose down
 
-ExecStartPre=-/usr/bin/docker rm -fv 3proxy
+ExecStartPre=-/usr/bin/docker rm -fv ipsec
 ExecReload=-/usr/bin/docker-compose pull --quiet --parallel
 ExecReload=-/usr/bin/docker-compose up -d
 
