@@ -1,0 +1,83 @@
+pipeline {
+    agent any    
+
+    options {
+        ansiColor('xterm')
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+environment {
+        passWord = credentials('passWord')
+    }
+
+    parameters {
+        booleanParam( name: "deployPlaybook", defaultValue: true, description: "Deploy ansible playbook.")
+        booleanParam( name: "onlyUpdatePipeline", defaultValue: false, description: "Update pipeline and exit (skipping other steps).")
+        string ( name: 'servername', defaultValue: '', description: "enter target server FQDN or IP")
+        string ( name: 'ns_server_1', defaultValue: '77.88.8.8', description: "DNS server #1")
+        string ( name: 'ns_server_2', defaultValue: '77.88.8.1', description: "DNS server #2")
+        string ( name: 'username', defaultValue: 'username', description: "username for authorization")
+        string ( name: 'userpass', defaultValue: 'plainpassword', description: "user password; plaintext")
+        }
+
+    stages {
+
+        stage('Update pipeline'){
+            when {
+                expression { params.onlyUpdatePipeline }
+            }
+            steps {
+                script {
+                    currentBuild.result = 'ABORTED'
+                    error("Pipeline updated!")
+                }
+            }
+        }
+
+        stage ('Modifying inventory file') {
+            when { 
+                expression { params.deployPlaybook } 
+            }
+            steps {
+                echo 'Modifying inventory file content'
+                sh "sed -i 's/x.x.x.x/${params.servername}/g' inventory/kvm.env"
+                sh "echo '[kvm:vars]' >> inventory/kvm.env"
+                sh "echo 'ansible_ssh_user=root' >> inventory/kvm.env"
+                sh "echo 'ansible_ssh_pass=${env.passWord}' >> inventory/kvm.env"
+
+            }
+        }
+
+        stage ('Run ansible playbook') {
+            when { 
+                expression { params.deployPlaybook } 
+            }
+            steps { 
+                ansiblePlaybook playbook: './3proxy.yml',
+                                        colorized: true,
+                                        inventory: './inventory/kvm.env',
+                                        extras: "--become-user=root --become-method=su -u root",
+                                        extraVars: [ns_server_1: "${params.ns_server_1}",
+                                            ns_server_2: "${params.ns_server_2}",
+                                            username: "${params.username}",
+                                            userpass: "${params.userpass}"
+                                            ]
+            }
+        }
+    }
+
+    post {
+
+        always {
+            cleanWs()
+            dir("${env.WORKSPACE}@tmp") {
+                deleteDir()
+            }
+            dir("${env.WORKSPACE}") {
+                deleteDir()
+            }
+        }
+    }
+
+}
