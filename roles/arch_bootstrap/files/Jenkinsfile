@@ -1,0 +1,74 @@
+pipeline {
+    agent any    
+
+    options {
+        ansiColor('xterm')
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
+environment {
+        passWord = credentials('passWord')
+    }
+
+    parameters {
+        booleanParam( name: "deployPlaybook", defaultValue: true, description: "Deploy ansible playbook.")
+        booleanParam( name: "onlyUpdatePipeline", defaultValue: false, description: "Update pipeline and exit (skipping other steps).")
+        string ( name: 'servername', defaultValue: '', description: "enter target server FQDN or IP")
+        }
+
+    stages {
+
+        stage('Update pipeline'){
+            when {
+                expression { params.onlyUpdatePipeline }
+            }
+            steps {
+                script {
+                    currentBuild.result = 'ABORTED'
+                    error("Pipeline updated!")
+                }
+            }
+        }
+
+        stage ('Modifying inventory file') {
+            when { 
+                expression { params.deployPlaybook } 
+            }
+            steps {
+                echo 'Modifying inventory file content'
+                sh "sed -i 's/x.x.x.x/${params.servername}/g' inventory/kvm.env"
+                sh "echo '[kvm:vars]' >> inventory/kvm.env"
+                sh "echo 'ansible_ssh_user=root' >> inventory/kvm.env"
+                sh "echo 'ansible_ssh_pass=${env.passWord}' >> inventory/kvm.env"
+
+            }
+        }
+
+        stage ('Run ansible playbook') {
+            when { 
+                expression { params.deployPlaybook } 
+            }
+            steps { 
+                ansiblePlaybook playbook: './arch_bootstrap.yml',
+                                        colorized: true,
+                                        inventory: './inventory/kvm.env',
+                                        extras: "--become-user=root --become-method=su -u root"
+            }
+        }
+    }
+
+    post {
+
+        always {
+            cleanWs()
+            dir("${env.WORKSPACE}@tmp") {
+                deleteDir()
+            }
+            dir("${env.WORKSPACE}") {
+                deleteDir()
+            }
+        }
+    }
+
+}
