@@ -3,7 +3,7 @@
 # Using 3proxy server.
 #
 
-FROM alpine:latest
+FROM alpine:latest as build
 ENV  APP_VER=0.8.12
 RUN  apk update --quiet && apk add build-base
 
@@ -15,5 +15,9 @@ RUN  wget https://github.com/z3APA3A/3proxy/archive/${APP_VER}.tar.gz &&\
      rm ${APP_VER}.tar.gz &&\
      mkdir /etc/3proxy && \
      ln -sf /dev/stdout /var/log/3proxy.log
+
+FROM alpine:latest
+
+COPY --from=build /usr/local/bin/3proxy /usr/local/bin/3proxy
 
 CMD  ["/usr/local/bin/3proxy", "/etc/3proxy/3proxy.cfg"]
