@@ -39,8 +39,8 @@ def runSteps() {
     }
 
     stage('Prepare inventory file') {
-        sh """sed -i "s/x.x.x.x/${params.servername}/g" inventory/kvm.env
-              echo "\n[kvm:vars]\nansible_ssh_user=root\nansible_ssh_pass=${params.accessPass}" >> inventory/kvm.env"
+        sh """sed -i 's/x.x.x.x/${params.servername}/g' inventory/kvm.env
+              echo '\n[kvm:vars]\nansible_ssh_user=root\nansible_ssh_pass=${params.accessPass}' >> inventory/kvm.env
            """
     }
 
@@ -79,4 +79,3 @@ node ('any') {
         }
     }
 }
-
