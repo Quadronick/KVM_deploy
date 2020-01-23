@@ -1,0 +1,73 @@
+properties([
+    buildDiscarder(logRotator(numToKeepStr: '15')),
+    disableConcurrentBuilds(),
+    parameters([
+        booleanParam( name: "onlyUpdatePipeline", defaultValue: false, description: "Update pipeline and exit (skipping other steps)."),
+        string ( name: 'servername', defaultValue: '', description: "Target server FQDN or IP"),
+        string ( name: 'accessPass', defaultValue: '', description: "Ssh access password")
+        string ( name: 'ns_server_1', defaultValue: '77.88.8.8', description: "DNS server #1"),
+        string ( name: 'ns_server_2', defaultValue: '77.88.8.1', description: "DNS server #2"),
+        string ( name: 'username', defaultValue: 'username', description: "Username for authorization."),
+        string ( name: 'userpass', defaultValue: 'plainpassword', description: "User password; plaintext.")
+    ])
+])
+
+
+def withBuildOptions(callback) {
+    ansiColor('xterm') {
+        timestamps {
+            callback()
+        }
+    }
+}
+
+
+def runSteps {
+
+    stage('Update pipeline') {
+        echo("Pipeline updated")
+    }
+
+    if ( params.onlyUpdatePipeline ) {
+        currentBuild.result = 'SUCCESS'
+        return
+    }
+
+    stage('Checkout SCM') {
+        git poll: false, url: 'https://github.com/Quadronick/KVM_deploy.git'
+    }
+
+    stage('Prepare inventory file') {
+        sh """sed -i "s/x.x.x.x/${params.servername}/g" inventory/kvm.env
+              echo "\n[kvm:vars]\nansible_ssh_user=root\nansible_ssh_pass=${params.accessPass}" >> inventory/kvm.env"
+           """
+    }
+
+    stage('Run ansible playbook') {
+        customParameters = ["-e ns_server_1=${params.ns_server_1}",
+                            "-e ns_server_2=${params.ns_server_2}",
+                            "-e username=${params.username}",
+                            "-e userpass=${params.userpass}"].join(' ')
+
+        withEnv(["ANSIBLE_HOST_KEY_CHECKING=False",
+                 "ANSIBLE_FORCE_COLOR=True",
+                 "PYTHONUNBUFFERED=1",
+                 "ANSIBLE_SSH_PIPELINING=True"]) { ansiblePlaybook( playbook: '3proxy.yml',
+                                                                    colorized: true,
+                                                                    inventory: './inventory/kvm.env',
+                                                                    hostKeyChecking: false,
+                                                                    extras: "${customParameters}")
+        }
+    }
+}
+
+node ('any') {
+    withBuildOptions {
+        try {
+            runSteps()
+        } finally {
+            deleteDir()
+        }
+    }
+}
+
