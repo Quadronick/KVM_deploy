@@ -8,3 +8,4 @@ services:
       - "20138:3128"
     volumes:
       - "{{ config_path }}/3proxy.cfg:/etc/3proxy/3proxy.cfg"
+      - "{{ config_path }}/3proxy.log:/var/log/3proxy.log"

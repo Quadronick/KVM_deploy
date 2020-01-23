@@ -1,0 +1,61 @@
+properties([
+    buildDiscarder(logRotator(numToKeepStr: '15')),
+    disableConcurrentBuilds(),
+    parameters([
+        string ( name: 'accessPass', defaultValue: '', description: "Ssh access password"),
+        string ( name: 'servername', defaultValue: '', description: "enter target server FQDN or IP"),
+        booleanParam( name: "onlyUpdatePipeline", defaultValue: false, description: "Update pipeline and exit (skipping other steps).")
+    ])
+])
+
+
+def withBuildOptions(callback) {
+    ansiColor('xterm') {
+        timestamps {
+            callback()
+        }
+    }
+}
+
+
+def runSteps() {
+
+    stage('Update pipeline') {
+        echo("Pipeline updated")
+    }
+
+    if ( params.onlyUpdatePipeline ) {
+        currentBuild.result = 'SUCCESS'
+        return
+    }
+
+    stage('Checkout SCM') {
+        git poll: false, url: 'https://github.com/Quadronick/KVM_deploy.git'
+    }
+
+    stage('Prepare inventory file') {
+        sh """sed -i 's/x.x.x.x/${params.servername}/g' inventory/kvm.env
+              echo '\n[kvm:vars]\nansible_ssh_user=root\nansible_ssh_pass=${params.accessPass}' >> inventory/kvm.env
+           """
+    }
+
+    stage('Run ansible playbook') {
+        withEnv(["ANSIBLE_HOST_KEY_CHECKING=False",
+                 "ANSIBLE_FORCE_COLOR=True",
+                 "PYTHONUNBUFFERED=1",
+                 "ANSIBLE_SSH_PIPELINING=True"]) { ansiblePlaybook( playbook: 'arch_bootstrap.yml',
+                                                                    colorized: true,
+                                                                    inventory: './inventory/kvm.env',
+                                                                    hostKeyChecking: false)
+        }
+    }
+
+node ('any') {
+    withBuildOptions {
+        try {
+            runSteps()
+        } finally {
+            deleteDir()
+        }
+    }
+}

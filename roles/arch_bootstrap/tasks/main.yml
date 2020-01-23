@@ -1,15 +1,14 @@
-- name: Update pacman master package lists and upgrade outdated packages if any.
+- name: "Update pacman master package lists and upgrade outdated packages if any."
   pacman:
-    update_cache: yes
-    upgrade: yes
+    update_cache: true
+    upgrade: true
 
-- name: Install docker and docker-compose
+- name: "Install docker and docker-compose"
   pacman:
     name: ['docker', 'docker-compose']
 
-- name: Enable docker service
+- name: "Enable docker service"
   service:
     name: docker
-    enabled: yes
+    enabled: true
     state: started
-
