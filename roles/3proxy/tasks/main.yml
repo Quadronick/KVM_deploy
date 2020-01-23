@@ -1,23 +1,36 @@
 - name: Create config direcory
-  file: dest={{ item }} state=directory
+  file:
+    path: "{{ item }}"
+    state: directory
   with_items:
-    - /root/3proxy-role
-    - /opt/3proxy
+    - "{{ app_root_path }}"
+    - "{{ config_path }}"
 
-- name: Copy 3proxy config
-  template: src="3proxy.cfg.j2" dest="/opt/3proxy/3proxy.cfg"
+- name: Render 3proxy config
+  template: 
+    src: "3proxy.cfg"
+    dest: "{{ config_path }}/3proxy.cfg"
 
 - name: Copy docker related files
-  copy: src={{ item }} dest="/root/3proxy-role"
+  template:
+    src: "{{ item }}"
+    dest: "{{ app_root_path }}"
   with_items:
     - Dockerfile
     - docker-compose.yml
 
 - name: Build image from Dockerfile
-  command: docker build -t 3proxy:latest /root/3proxy-role
+  docker_image:
+    build:
+      path: "{{ app_root_path }}"
+    name: 3proxy
+    tag: "{{ app_version }}"
+    source: build
     
 - name: Copy 3proxy systemcd service
-  copy: src="3proxy.service" dest="/usr/lib/systemd/system"
+  template:
+    src: 3proxy.service
+    dest: /etc/systemd/system/
 
 - name: Enable and start 3proxy service
   service:

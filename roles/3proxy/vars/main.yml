@@ -7,3 +7,9 @@ ns_server_2: "77.88.8.1"
 
 username: "username"
 userpass: "plainpassword"
+
+config_path: "/opt/3proxy"
+app_root_path: "/root/3proxy-role"
+app_version: "0.8.13"
+
+base_alpine_version: "3.11"
