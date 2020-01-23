@@ -1,25 +1,29 @@
-- name: Create config direcory
+- name: "Cleanup before deployment"
+  import_tasks: cleanup.yml
+  when: ( CLEANUP | default(false) | bool )
+
+- name: "Create config direcory"
   file:
     path: "{{ item }}"
     state: directory
-  with_items:
+  loop:
     - "{{ app_root_path }}"
     - "{{ config_path }}"
 
-- name: Render 3proxy config
+- name: "Render 3proxy config"
   template: 
     src: "3proxy.cfg"
     dest: "{{ config_path }}/3proxy.cfg"
 
-- name: Copy docker related files
+- name: "Copy docker related files"
   template:
     src: "{{ item }}"
     dest: "{{ app_root_path }}"
-  with_items:
+  loop:
     - Dockerfile
     - docker-compose.yml
 
-- name: Build image from Dockerfile
+- name: "Build image from Dockerfile"
   docker_image:
     build:
       path: "{{ app_root_path }}"
@@ -27,14 +31,14 @@
     tag: "{{ app_version }}"
     source: build
     
-- name: Copy 3proxy systemcd service
+- name: "Copy 3proxy systemcd service"
   template:
     src: 3proxy.service
-    dest: /etc/systemd/system/
+    dest: "{{ systemd_unit_path }}"
 
-- name: Enable and start 3proxy service
+- name: "Enable and start 3proxy service"
   service:
     name: 3proxy
-    enabled: yes
+    enabled: true
     state: started
 

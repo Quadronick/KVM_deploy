@@ -3,8 +3,9 @@ properties([
     disableConcurrentBuilds(),
     parameters([
         booleanParam( name: "onlyUpdatePipeline", defaultValue: false, description: "Update pipeline and exit (skipping other steps)."),
+        booleanParam( name: "cleanupEnabled", defaultValue: true, description: "Clean up previous installation."),
         string ( name: 'servername', defaultValue: '', description: "Target server FQDN or IP"),
-        string ( name: 'accessPass', defaultValue: '', description: "Ssh access password")
+        string ( name: 'accessPass', defaultValue: '', description: "Ssh access password"),
         string ( name: 'ns_server_1', defaultValue: '77.88.8.8', description: "DNS server #1"),
         string ( name: 'ns_server_2', defaultValue: '77.88.8.1', description: "DNS server #2"),
         string ( name: 'username', defaultValue: 'username', description: "Username for authorization."),
@@ -22,7 +23,7 @@ def withBuildOptions(callback) {
 }
 
 
-def runSteps {
+def runSteps() {
 
     stage('Update pipeline') {
         echo("Pipeline updated")
@@ -44,11 +45,19 @@ def runSteps {
     }
 
     stage('Run ansible playbook') {
+        def customParameters = []
+
         customParameters = ["-e ns_server_1=${params.ns_server_1}",
                             "-e ns_server_2=${params.ns_server_2}",
                             "-e username=${params.username}",
-                            "-e userpass=${params.userpass}"].join(' ')
-
+                            "-e userpass=${params.userpass}"]
+        
+        if ( params.cleanupEnabled ) {
+            customParameters.add("-e CLEANUP=true")
+        }
+        
+        customParameters = customParameters.join(' ')
+        
         withEnv(["ANSIBLE_HOST_KEY_CHECKING=False",
                  "ANSIBLE_FORCE_COLOR=True",
                  "PYTHONUNBUFFERED=1",

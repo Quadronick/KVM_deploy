@@ -1,0 +1,16 @@
+- name: "[cleanup] Stopping services"
+  service:
+    name: 3proxy
+    state: stopped
+    enabled: false
+  ignore_errors: true
+
+- name: "[cleanup] Remove all related files"
+  file:
+    path: "{{ item }}"
+    state: absent
+    force: true
+  loop:
+    - "{{ app_root_path }}"
+    - "{{ config_path }}"
+    - "{{ systemd_unit_path }}"

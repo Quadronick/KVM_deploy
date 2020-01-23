@@ -9,6 +9,7 @@ username: "username"
 userpass: "plainpassword"
 
 config_path: "/opt/3proxy"
+systemd_unit_path: "/etc/systemd/system/"
 app_root_path: "/root/3proxy-role"
 app_version: "0.8.13"
 
